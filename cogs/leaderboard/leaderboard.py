@@ -8,10 +8,17 @@ class Leaderboard(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author.bot:
+        if message.author.bot or not message.guild:
             return
         
-        xp, old_level = await self.helper.add_xp(message.author.id, 10)
-        new_level = self.helper.calculate_level(xp)
-        if new_level > old_level:
-            await message.channel.send(f"Congratulations {message.author.mention}! You've reached level {new_level}.")
+        user_id = message.author.id
+        current_time = asyncio.get_event_loop().time()
+
+        if user_id in self.cooldowns and current_time - self.cooldowns[user_id] < 60:
+            return
+        
+        # SQL
+        
+        self.cooldowns[user_id] = current_time
+
+    

@@ -26,6 +26,9 @@ class MyBot(commands.Bot):
             if filename.endswith('.py'):
                 await self.load_extension(f'cogs.{filename[:-3]}')
                 print(f'Loaded cog: {filename}')
+
+        self.add_view(TicketsLauncher(TicketsHelper(self.db_pool)))  # Add the persistent view for tickets
+        self.add_view(StaffAppLauncher(is_open=False))  # Add the persistent view for staff applications
     
     async def on_ready(self):
         await self.wait_until_ready()

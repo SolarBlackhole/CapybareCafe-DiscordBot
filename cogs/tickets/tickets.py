@@ -93,13 +93,42 @@ class Tickets(commands.Cog):
         self.bot = bot
         self.helper = TicketsHelper(bot.db_pool)
 
-    @commands.command()
-    @commands.has_permissions(administrator=True)
-    async def setup_tickets(self, ctx):
-        """Sets up the ticket system by sending a message with buttons to create tickets.
-        """
+    @app_commands.command(
+        name="setup_tickets", 
+        description="Sends the persistent ticket buttons to the designated support channel."
+    )
+    @app_commands.checks.has_permissions(administrator=True)
+    async def setup_tickets(self, interaction: discord.Interaction):
+        
+        # 1. Initialize the View
         view = TicketsLauncher(self.helper)
-        await ctx.send("Please choose an option below to create a ticket:", view=view)
+        
+        # 2. Get the target channel from .env
+        channel_id = os.getenv('BUTTON_CHANNEL_ID')
+        if not channel_id:
+            return await interaction.response.send_message(
+                "Error: BUTTON_CHANNEL_ID not found in .env", ephemeral=True
+            )
+            
+        target_channel = interaction.guild.get_channel(int(channel_id))
+        
+        if target_channel:
+            embed = discord.Embed(
+                title="Support Center",
+                description="Click the buttons below to open a private ticket with our staff.",
+                color=discord.Color.blue()
+            )
+            await target_channel.send(embed=embed, view=view)
+            
+            await interaction.response.send_message(
+                f"✅ Ticket system deployed to {target_channel.mention}!", 
+                ephemeral=True
+            )
+        else:
+            await interaction.response.send_message(
+                "Error: Could not find the specified channel. Check your ID.", 
+                ephemeral=True
+            )
 
 async def setup(bot):
     await bot.add_cog(Tickets(bot))
