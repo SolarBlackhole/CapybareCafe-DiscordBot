@@ -1,6 +1,6 @@
 import discord
-from discord.ext import commands
-from .tickets_helper import TicketsHelper
+from discord import app_commands
+from ..helpers.tickets_helper import TicketsHelper
 from dotenv import load_dotenv
 import asyncio
 import os
@@ -57,13 +57,13 @@ class ConfirmClose(discord.ui.View):
         await channel.send("Closing ticket and generating transcript...")
         # show bot is thinking while generating transcript
         await interaction.response.defer() 
-        transcript_file = await TicketsHelper.generate_transcript(channel.id)
+        transcript_file = await self.helper.generate_transcript(channel)
         if transcript_file:
             await channel.send("Here is the transcript of your ticket:", file=transcript_file)
         else:
             await channel.send("Failed to generate transcript.")
         await channel.send("Thank you for contacting support! This ticket will now be closed in 10 seconds.")
-        await TicketsHelper.close_ticket_record(channel.id)
+        await self.helper.close_ticket_record(channel.id)
         await asyncio.sleep(10)
         await channel.delete()
 
@@ -88,7 +88,7 @@ class ReportPlayerModal(discord.ui.Modal, title="Report a Player"):
         embed.add_field(name="Reason for Report", value=self.report_reason.value, inline=False)
         await channel.send(embed=embed, content=f"{interaction.user.mention} Your report has been submitted. A staff member will review it shortly. To close this report, use the 'Close Ticket' button below.", view=CloseTicketView(TicketsHelper(interaction.client.db_pool)))
 
-class Tickets(commands.Cog):
+class Tickets(app_commands.Group):
     def __init__(self, bot):
         self.bot = bot
         self.helper = TicketsHelper(bot.db_pool)

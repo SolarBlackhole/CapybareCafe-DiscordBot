@@ -1,7 +1,8 @@
 import chat_exporter
 import io
+import discord
 
-class TicketHelper:
+class TicketsHelper: # Fixed naming to match your Cog's call
     def __init__(self, db_pool):
         self.db_pool = db_pool
 
@@ -21,12 +22,13 @@ class TicketHelper:
                     (channel_id,)
                 )
     
-    async def generate_transcript(self, channel_id):
-        transcript = await chat_exporter.export(channel_id)
+    async def generate_transcript(self, channel):
+        # chat_exporter needs the actual channel object, not the ID
+        transcript = await chat_exporter.export(channel)
         if transcript is None:
             return None
     
         return discord.File(
             io.BytesIO(transcript.encode()),
-            filename=f"transcript-{channel_id}.html"
+            filename=f"transcript-{channel.id}.html"
         )

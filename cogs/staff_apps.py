@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import app_commands
 import os
 import asyncio
 import chat_exporter
@@ -45,6 +45,11 @@ class StaffAppModal(discord.ui.Modal):
             interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
             guild.get_role(int(os.getenv('STAFF_MANAGER_ROLE_ID'))): discord.PermissionOverwrite(read_messages=True, send_messages=True)
         })
+
+        await interaction.client.db.execute(
+            "INSERT INTO tickets (channel_id, user_id, ticket_type, status) VALUES (%s, %s, 'staff_app', 'open')",
+            channel.id, interaction.user.id
+        )
 
         embed = discord.Embed(title="New Staff Application", color=discord.Color.blue())
         embed.add_field(name="Applicant", value=interaction.user.mention)
@@ -101,6 +106,7 @@ class AppReviewActions(discord.ui.View):
 
         transcript = await chat_exporter.export(interaction.channel)
         log_channel = interaction.guild.get_channel(int(os.getenv('APPLICATION_LOG_CHANNEL_ID')))
+        await self.bot.db.execute("UPDATE tickets SET status = 'closed' WHERE channel_id = %s", interaction.channel.id)
 
         if transcript:
             transcript_file = discord.File(io.BytesIO(transcript.encode()), filename=f"application-{self.applicant.name}.html")
@@ -132,6 +138,7 @@ class AppFinalActions(discord.ui.View):
 
         transcript = await chat_exporter.export(interaction.channel)
         log_channel = interaction.guild.get_channel(int(os.getenv('APPLICATION_LOG_CHANNEL_ID')))
+        await self.bot.db.execute("UPDATE tickets SET status = 'closed' WHERE channel_id = %s", interaction.channel.id)
 
         if transcript:
             transcript_file = discord.File(io.BytesIO(transcript.encode()), filename=f"application-{self.applicant.name}.html")
@@ -144,17 +151,68 @@ class StaffApplications(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @bot.tree.command(
+    @app_commands.command(
             name="toggle_apps", 
             description="Toggle staff applications open/closed"
     )
     @app_commands.checks.has_role(int(os.getenv('STAFF_MANAGER_ROLE_ID')))
-    async def toggle_apps(interaction: discord.Interaction, open_status: bool):
-        channel = interaction.guild.get_channel(int(os.getenv('BUTTON_CHANNEL_ID')))
-        view = StaffAppLauncher(is_open=open_status)
-        embed = discord.Embed(
-            title="Staff Recruitment",
-            description="We are currently accepting applications for new staff members! If you're interested in joining our team, please click the button below to apply. We look forward to reviewing your application and potentially welcoming you to the team!"
+    async def toggle_apps(self, interaction: discord.Interaction, open_status: bool):
+        await interaction.response.defer(ephemeral=True) # Defer because of multiple DB calls
+        
+        status_val = "open" if open_status else "closed"
+        
+        # 1. Update the status in DB
+        await self.bot.db.execute(
+            "INSERT INTO server_settings (setting_key, setting_value) VALUES ('staff_apps', %s) "
+            "ON DUPLICATE KEY UPDATE setting_value = %s", status_val, status_val
         )
-        await channel.send(embed=embed, view=view)
-        await interaction.response.send_message(f"Staff applications have been {'opened' if open_status else 'closed'}.", ephemeral=True)   
+
+        channel = interaction.guild.get_channel(int(os.getenv('BUTTON_CHANNEL_ID')))
+        
+        # 2. Prepare the Embed and View
+        if open_status:
+            embed = discord.Embed(
+                title="Staff Recruitment",
+                description="We are currently accepting applications! Click the button below to apply.",
+                color=discord.Color.green()
+            )
+        else:
+            embed = discord.Embed(
+                title="Staff Recruitment",
+                description="Applications are currently closed. Please check back later!",
+                color=discord.Color.red()
+            )
+        view = StaffAppLauncher(is_open=open_status)
+
+        # 3. Check MariaDB for an existing message ID
+        msg_record = await self.bot.db.fetchrow(
+            "SELECT setting_value FROM server_settings WHERE setting_key = 'staff_app_msg_id'"
+        )
+
+        success_action = "updated"
+        if msg_record:
+            try:
+                # Try to fetch and edit the existing message
+                message = await channel.fetch_message(int(msg_record['setting_value']))
+                await message.edit(embed=embed, view=view)
+            except (discord.NotFound, discord.HTTPException):
+                # If message was deleted manually, send a new one
+                new_msg = await channel.send(embed=embed, view=view)
+                await self.bot.db.execute(
+                    "UPDATE server_settings SET setting_value = %s WHERE setting_key = 'staff_app_msg_id'",
+                    str(new_msg.id)
+                )
+                success_action = "re-created (old one missing)"
+        else:
+            # First time setup: Send message and save ID
+            new_msg = await channel.send(embed=embed, view=view)
+            await self.bot.db.execute(
+                "INSERT INTO server_settings (setting_key, setting_value) VALUES ('staff_app_msg_id', %s)",
+                str(new_msg.id)
+            )
+            success_action = "created"
+
+        await interaction.followup.send(
+            content=f"Staff applications have been **{status_val}** and the recruitment message was **{success_action}**.", 
+            ephemeral=True
+        )
