@@ -73,8 +73,4 @@ class CapyBot(commands.Bot):
 
 bot = CapyBot()
 
-@bot.event
-
-    
-
 bot.run(os.getenv('BOT_TOKEN'))
