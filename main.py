@@ -62,17 +62,18 @@ class CapyBot(commands.Bot):
             self.tree.copy_global_to(guild=guild_obj)
             await self.tree.sync(guild=guild_obj)
         
-        # 5. Presence
-        activity = discord.Activity(type=discord.ActivityType.watching, name="the cafe")
-        await self.change_presence(activity=activity)
         
         print(f"{self.user} is synced and ready!")
 
 bot = CapyBot()
 
 @bot.event
-async def on_ready():
+async def on_ready(self):
+    activity = discord.Activity(type=discord.ActivityType.watching, name="the cafe")
+    await self.change_presence(activity=activity)
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('------')
+
+    
 
 bot.run(os.getenv('BOT_TOKEN'))
