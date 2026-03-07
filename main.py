@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from helpers.db_helper import Database
 from helpers.tickets_helper import TicketsHelper
 from helpers.leaderboard_helper import LeaderboardHelper
-from helpers.role_helper import RoleHelper # Don't forget this one!
+from helpers.roles_helper import RoleHelper
 
 # Views for Persistence
 from cogs.tickets import TicketsLauncher, CloseTicketView
