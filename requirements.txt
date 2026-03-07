@@ -1,0 +1,4 @@
+discord.py
+aiomysql
+python-dotenv
+chat-exporter
