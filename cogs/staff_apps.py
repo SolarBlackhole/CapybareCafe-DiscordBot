@@ -61,7 +61,7 @@ class StaffAppModal(discord.ui.Modal):
     )
 
     agreement = discord.ui.TextInput(
-        label="Do you agree to follow the staff code of conduct?", 
+        label="Do you agree to follow the code of conduct?", 
         placeholder="Yes/No", 
         min_length=2, 
         max_length=3

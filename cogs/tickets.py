@@ -57,6 +57,7 @@ class ConfirmClose(discord.ui.View):
 
     @discord.ui.button(label="Yes, Close", style=discord.ButtonStyle.danger, custom_id="confirm_close")
     async def confirm_close(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer()
         channel = interaction.channel
         await channel.send("Closing ticket and generating transcript...")
         transcript_file = await self.helper.generate_transcript(channel)
