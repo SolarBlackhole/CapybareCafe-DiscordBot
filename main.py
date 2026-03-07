@@ -23,6 +23,12 @@ class CapyBot(commands.Bot):
         super().__init__(command_prefix=os.getenv('COMMAND_PREFIX', '!'), intents=intents)
         self.db = Database()
 
+    async def on_ready(self):
+        activity = discord.Activity(type=discord.ActivityType.watching, name="the cafe")
+        await self.change_presence(activity=activity)
+        print(f'Logged in as {self.user} (ID: {self.user.id})')
+        print('------')
+
     async def setup_hook(self):
         # 1. Connect to MariaDB
         await self.db.connect()
@@ -68,11 +74,6 @@ class CapyBot(commands.Bot):
 bot = CapyBot()
 
 @bot.event
-async def on_ready(self):
-    activity = discord.Activity(type=discord.ActivityType.watching, name="the cafe")
-    await self.change_presence(activity=activity)
-    print(f'Logged in as {self.user} (ID: {self.user.id})')
-    print('------')
 
     
 
