@@ -26,6 +26,9 @@ class StaffAppLauncher(discord.ui.View):
         await interaction.response.send_modal(StaffAppModal())
 
 class StaffAppModal(discord.ui.Modal):
+    def __init__(self):
+        super().__init__(title="Staff Application")
+
     steam_id = discord.ui.TextInput(label="SteamID64", placeholder="7656119xxxxxxxxxx", min_length=17, max_length=17)
     age = discord.ui.TextInput(label="Age", placeholder="", min_length=2, max_length=2)
     timezone = discord.ui.TextInput(label="Timezone", placeholder="UTC+X", min_length=4, max_length=6)
@@ -113,6 +116,7 @@ class AppReviewActions(discord.ui.View):
             transcript_file = discord.File(io.BytesIO(transcript.encode()), filename=f"application-{self.applicant.name}.html")
             await log_channel.send(f"Application for {self.applicant.mention} has been {decision}. Transcript attached.", file=transcript_file)
         
+        await interaction.followup.send("The application channel will be deleted in 5 seconds.")
         await asyncio.sleep(5)
         await interaction.channel.delete()
 
@@ -145,6 +149,7 @@ class AppFinalActions(discord.ui.View):
             transcript_file = discord.File(io.BytesIO(transcript.encode()), filename=f"application-{self.applicant.name}.html")
             await log_channel.send(f"Application for {self.applicant.mention} has been {decision}. Transcript attached.", file=transcript_file)
         
+        await interaction.followup.send("The application channel will be deleted in 5 seconds.")
         await asyncio.sleep(5)
         await interaction.channel.delete()
 
