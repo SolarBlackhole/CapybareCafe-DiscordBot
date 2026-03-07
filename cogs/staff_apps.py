@@ -115,9 +115,10 @@ class AppReviewActions(discord.ui.View):
         if interaction.user == self.applicant:
             await interaction.response.send_message("You cannot take action on your own application.", ephemeral=True)
             return
+        await interaction.message.edit(view=AppFinalActions(self.applicant))
         await interaction.response.send_message(f" {self.applicant.mention} you have passed the initial review stage! A staff member will contact you soon.")
 
-        await interaction.message.edit(view=AppFinalActions(self.applicant))
+        
 
     @discord.ui.button(label="Deny", style=discord.ButtonStyle.danger, custom_id="deny_screen")
     async def deny(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -130,7 +131,6 @@ class AppReviewActions(discord.ui.View):
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary, custom_id="cancel_application")
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("Your application has been cancelled.", ephemeral=True)
         await self.close_with_transcript(interaction, "CANCELLED")
 
     async def close_with_transcript(self, interaction, decision):
