@@ -31,7 +31,7 @@ class TicketsLauncher(discord.ui.View):
         await ticket_channel.set_permissions(interaction.user, read_messages=True, send_messages=True)
         await ticket_channel.set_permissions(guild.default_role, read_messages=False)
 
-        await interaction.followup.send_message(f"Ticket created: {ticket_channel.mention}", ephemeral=True)
+        await interaction.followup.send(f"Ticket created: {ticket_channel.mention}", ephemeral=True)
         await ticket_channel.send(f"{interaction.user.mention} Welcome to your support ticket! A staff member will be with you shortly. To close this ticket, use the 'Close Ticket' button below.", view=CloseTicketView(self.helper))
 
     # Create Ticket Button - Report
