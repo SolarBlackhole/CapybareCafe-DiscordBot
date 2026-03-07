@@ -1,23 +1,33 @@
-name: CI/CD Deploy
+name: Build and Push Bot
 
 on:
   push:
     branches: [ "main", "test" ]
 
+# This gives the script permission to write to your GitHub Packages
+permissions:
+  contents: read
+  packages: write
+
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Log in to GitHub Packages
-        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Build and Push
-        run: |
-          # Determine tag based on branch
-          TAG=${{ github.ref_name == 'main' && 'latest' || 'test' }}
-          IMAGE=ghcr.io/${{ github.repository }}:$TAG
-          
-          docker build -t $IMAGE .
-          docker push $IMAGE
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          # This logic tags 'main' as 'latest' and 'test' as 'test'
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ github.ref_name == 'main' && 'latest' || 'test' }}
