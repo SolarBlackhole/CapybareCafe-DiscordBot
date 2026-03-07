@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from helpers.db_helper import Database
 from helpers.tickets_helper import TicketsHelper
 from helpers.leaderboard_helper import LeaderboardHelper
-from helpers.roles_helper import RoleHelper
+from helpers.roles_helper import RolesHelper
 
 # Views for Persistence
 from cogs.tickets import TicketsLauncher, CloseTicketView
@@ -49,7 +49,7 @@ class CapyBot(commands.Bot):
         self.add_view(StaffAppLauncher(is_open=is_open))
 
         # Roles Persistence
-        role_helper = RoleHelper(self.db_pool)
+        role_helper = RolesHelper(self.db_pool)
         menu_ids = await role_helper.get_all_menu_ids()
         for msg_id in menu_ids:
             roles_data = await role_helper.get_menu_roles(msg_id)
