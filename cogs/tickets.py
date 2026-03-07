@@ -48,9 +48,13 @@ class CloseTicketView(discord.ui.View):
     async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
 
         embed = discord.Embed(description="Are you sure you want to close this ticket?", color=discord.Color.orange())
-        await interaction.response.send_message(embed=embed, view=ConfirmClose(), ephemeral=True)
+        await interaction.response.send_message(embed=embed, view=ConfirmClose(self.helper), ephemeral=True)
 
 class ConfirmClose(discord.ui.View):
+    def __init__(self, helper):
+        super().__init__(timeout=180)
+        self.helper = helper
+
     @discord.ui.button(label="Yes, Close", style=discord.ButtonStyle.danger, custom_id="confirm_close")
     async def confirm_close(self, interaction: discord.Interaction, button: discord.ui.Button):
         channel = interaction.channel
@@ -85,6 +89,7 @@ class ReportPlayerModal(discord.ui.Modal, title="Report a Player"):
         embed.add_field(name="Player Name / Steam ID", value=self.player_name.value, inline=False)
         embed.add_field(name="Reason for Report", value=self.report_reason.value, inline=False)
         await channel.send(embed=embed, content=f"{interaction.user.mention} Your report has been submitted. A staff member will review it shortly. To close this report, use the 'Close Ticket' button below.", view=CloseTicketView(TicketsHelper(interaction.client.db_pool)))
+        await interaction.response.send_message(f"Report submitted: {channel.mention}", ephemeral=True)
 
 class Tickets(commands.Cog):
     def __init__(self, bot):
