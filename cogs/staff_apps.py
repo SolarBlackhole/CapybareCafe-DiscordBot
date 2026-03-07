@@ -217,3 +217,6 @@ class StaffApplications(commands.Cog):
             content=f"Staff applications have been **{status_val}** and the recruitment message was **{success_action}**.", 
             ephemeral=True
         )
+
+async def setup(bot):
+    await bot.add_cog(StaffApplications(bot))

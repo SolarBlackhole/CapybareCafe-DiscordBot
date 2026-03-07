@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+from helpers.leaderboard_helper import LeaderboardHelper
 import time
 import random
 import math
@@ -92,3 +93,6 @@ class Leaderboard(commands.Cog):
 
         embed.description = leaderboard_text or "No one on the leaderboard yet!"
         await interaction.followup.send(embed=embed)
+
+async def setup(bot):
+    await bot.add_cog(Leaderboard(bot))

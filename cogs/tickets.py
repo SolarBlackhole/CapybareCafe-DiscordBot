@@ -88,7 +88,7 @@ class ReportPlayerModal(discord.ui.Modal, title="Report a Player"):
         embed.add_field(name="Reason for Report", value=self.report_reason.value, inline=False)
         await channel.send(embed=embed, content=f"{interaction.user.mention} Your report has been submitted. A staff member will review it shortly. To close this report, use the 'Close Ticket' button below.", view=CloseTicketView(TicketsHelper(interaction.client.db_pool)))
 
-class Tickets(app_commands.Group):
+class Tickets(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.helper = TicketsHelper(bot.db_pool)
