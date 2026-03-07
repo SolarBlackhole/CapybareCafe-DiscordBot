@@ -28,6 +28,6 @@ jobs:
         with:
           context: .
           push: true
-          # This logic tags 'main' as 'latest' and 'test' as 'test'
+          # We manually construct the lowercase name here
           tags: |
-            ghcr.io/${{ github.repository }}:${{ github.ref_name == 'main' && 'latest' || 'test' }}
+            ghcr.io/solarblackhole/capybarecafe-discordbot:${{ github.ref_name == 'main' && 'latest' || 'test' }}
