@@ -71,7 +71,7 @@ bot = CapyBot()
 async def on_ready(self):
     activity = discord.Activity(type=discord.ActivityType.watching, name="the cafe")
     await self.change_presence(activity=activity)
-    print(f'Logged in as {bot.user} (ID: {bot.user.id})')
+    print(f'Logged in as {self.user} (ID: {self.user.id})')
     print('------')
 
     
