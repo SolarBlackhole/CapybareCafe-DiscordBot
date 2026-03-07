@@ -1,7 +1,7 @@
 import discord
+from discord.ext import commands
 from discord import app_commands
 from helpers.tickets_helper import TicketsHelper
-from dotenv import load_dotenv
 import asyncio
 import os
 
