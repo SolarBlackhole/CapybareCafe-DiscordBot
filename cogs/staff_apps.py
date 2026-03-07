@@ -29,14 +29,43 @@ class StaffAppModal(discord.ui.Modal):
     def __init__(self):
         super().__init__(title="Staff Application")
 
-    steam_id = discord.ui.TextInput(label="SteamID64", placeholder="7656119xxxxxxxxxx", min_length=17, max_length=17)
-    age = discord.ui.TextInput(label="Age", placeholder="", min_length=2, max_length=2)
-    timezone = discord.ui.TextInput(label="Timezone", placeholder="UTC+X", min_length=4, max_length=6)
-    has_microphone = discord.ui.TextInput(label="Do you have a microphone?", placeholder="Yes/No", min_length=2, max_length=3)
-    experience = discord.ui.TextInput(label="What is your experience with staff roles?", style=discord.TextStyle.paragraph, placeholder="", min_length=10, max_length=2000)
-    fit = discord.ui.TextInput(label="Why do you think you'd be a good fit for the staff team?", style=discord.TextStyle.paragraph, placeholder="", min_length=10, max_length=2000)
-    bias = discord.ui.TextInput(label="Do you have any biases that would affect your ability to be a fair staff member?", style=discord.TextStyle.paragraph, placeholder="", min_length=10, max_length=2000)
-    agreement = discord.ui.TextInput(label="Do you understand that abusing permissions, showing overt toxicity towards community members, or simply not being a good fit for the role may have your role revoked at any time?", placeholder="Yes/No", min_length=2, max_length=3)
+    # Field 1: Basic Info
+    basics = discord.ui.TextInput(
+        label="SteamID64 & Age", 
+        placeholder="SteamID: 7656119xxxxxxxxxx | Age: 25",
+        min_length=20, 
+        max_length=50
+    )
+    
+    availability = discord.ui.TextInput(
+        label="Timezone & Microphone", 
+        placeholder="Timezone: UTC+0 | Mic: Yes",
+        min_length=10, 
+        max_length=40
+    )
+    
+    experience = discord.ui.TextInput(
+        label="Prior Experience", 
+        style=discord.TextStyle.paragraph, 
+        placeholder="What is your experience with moderation roles?", 
+        min_length=10, 
+        max_length=1000
+    )
+    
+    fit_bias = discord.ui.TextInput(
+        label="Fit & Biases", 
+        style=discord.TextStyle.paragraph, 
+        placeholder="Why are you a good fit? Any biases we should know?", 
+        min_length=10, 
+        max_length=1500
+    )
+
+    agreement = discord.ui.TextInput(
+        label="Do you agree to follow the staff code of conduct?", 
+        placeholder="Yes/No", 
+        min_length=2, 
+        max_length=3
+    )
 
     async def on_submit(self, interaction: discord.Interaction):
         guild = interaction.guild
@@ -52,19 +81,19 @@ class StaffAppModal(discord.ui.Modal):
 
         await interaction.client.db.execute(
             "INSERT INTO tickets (channel_id, user_id, ticket_type, status) VALUES (%s, %s, 'staff_app', 'open')",
-            channel.id, interaction.user.id
+            (channel.id, interaction.user.id)
         )
 
         embed = discord.Embed(title="New Staff Application", color=discord.Color.blue())
-        embed.add_field(name="Applicant", value=interaction.user.mention)
-        embed.add_field(name="SteamID64", value=self.steam_id.value)
-        embed.add_field(name="Age", value=self.age.value)
-        embed.add_field(name="Timezone", value=self.timezone.value)
-        embed.add_field(name="Does the applicant have a microphone?", value=self.has_microphone.value)
-        embed.add_field(name="Applicant's Experience", value=self.experience.value, inline=False)
-        embed.add_field(name="Why they're a good fit", value=self.fit.value, inline=False)
-        embed.add_field(name="Potential Biases", value=self.bias.value, inline=False)
-        embed.add_field(name="Staff Agreement", value=self.agreement.value)
+        embed.set_thumbnail(url=interaction.user.display_avatar.url)
+
+        embed.add_field(name="Applicant", value=interaction.user.mention, inline=True)
+        embed.add_field(name="Basics (SteamID/Age)", value=self.basics.value, inline=True)
+        embed.add_field(name="Availability (TZ/Mic)", value=self.availability.value, inline=True)
+    
+        embed.add_field(name="Experience", value=self.experience.value, inline=False)
+        embed.add_field(name="Fit & Biases", value=self.fit_bias.value, inline=False)
+        embed.add_field(name="Staff Agreement", value=self.agreement.value, inline=False)
 
         await channel.send(embed=embed, view=AppReviewActions(interaction.user))
 
@@ -73,7 +102,7 @@ class StaffAppModal(discord.ui.Modal):
         embed = discord.Embed(description=f"{interaction.user.mention} has submitted a staff application! Click the button below to view their application.", color=discord.Color.green())
         view = discord.ui.View()
         view.add_item(discord.ui.Button(label="View Application", style=discord.ButtonStyle.primary, url=channel.jump_url))
-        await list_applications_channel.send(embed=embed)
+        await list_applications_channel.send(embed=embed, view=view)
 
 # This view will be used by staff members to take action on applications after reviewing them
 class AppReviewActions(discord.ui.View):
