@@ -81,7 +81,7 @@ class StaffAppModal(discord.ui.Modal):
 
         await interaction.client.db.execute(
             "INSERT INTO tickets (channel_id, user_id, ticket_type, status) VALUES (%s, %s, 'staff_app', 'open')",
-            (channel.id, interaction.user.id)
+            channel.id, interaction.user.id
         )
 
         embed = discord.Embed(title="New Staff Application", color=discord.Color.blue())
