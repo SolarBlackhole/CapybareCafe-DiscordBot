@@ -6,7 +6,7 @@ class Starboard(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.star_emoji = '⭐'
-        self.threshold = 5
+        self.threshold = int(os.getenv("STARBOARD_THRESHOLD", 5))
         self.starboard_channel_id = int(os.getenv("STARBOARD_CHANNEL_ID"))  # Replace with your starboard channel ID
 
     @commands.Cog.listener()
