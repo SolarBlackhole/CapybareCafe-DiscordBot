@@ -134,8 +134,10 @@ class AppReviewActions(discord.ui.View):
         await self.close_with_transcript(interaction, "CANCELLED")
 
     async def close_with_transcript(self, interaction, decision):
+        if not interaction.response.is_done():
+            await interaction.response.defer()
+
         await interaction.channel.send(f"Closing application and generating transcript... Decision: {decision}")
-        await interaction.response.defer()
 
         transcript = await chat_exporter.export(interaction.channel)
         log_channel = interaction.guild.get_channel(int(os.getenv('APPLICATION_LOG_CHANNEL_ID')))
