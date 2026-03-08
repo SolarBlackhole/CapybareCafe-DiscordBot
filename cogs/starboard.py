@@ -7,22 +7,27 @@ class Starboard(commands.Cog):
         self.bot = bot
         self.star_emoji = '⭐'
         self.threshold = int(os.getenv("STARBOARD_THRESHOLD", 5))
-        self.starboard_channel_id = int(os.getenv("STARBOARD_CHANNEL_ID"))  # Replace with your starboard channel ID
+        self.starboard_channel_id = int(os.getenv("STARBOARD_CHANNEL_ID")) 
 
     @commands.Cog.listener()
-    async def on_reaction_add(self, payload):
+    async def on_raw_reaction_add(self, payload):
         if str(payload.emoji) != self.star_emoji:
             return
         
         channel = self.bot.get_channel(payload.channel_id)
-        message = await channel.fetch_message(payload.message_id)
-        
+        if not channel: return
+
+        try:
+            message = await channel.fetch_message(payload.message_id)
+        except discord.NotFound:
+            return
+
         if message.author.bot or message.author.id == payload.user_id:
             return
         
         starboard_channel = self.bot.get_channel(self.starboard_channel_id)
         if not starboard_channel:
-            print("❌ Starboard channel not found. Please check the STARBOARD_CHANNEL_ID in your .env file.")
+            print("Starboard channel not found. Please check the STARBOARD_CHANNEL_ID in your .env file.")
             return
         
         # Count the number of star reactions
@@ -44,10 +49,13 @@ class Starboard(commands.Cog):
             content = f"{self.star_emoji} **{star_count}** | {channel.mention}"
 
             if entry:
-                starboard_msg = await starboard_channel.fetch_message(entry['starboard_message_id'])
-                await starboard_msg.edit(content=content, embed=embed)
-                await self.bot.db.execute("UPDATE starboard SET stars = %s WHERE original_message_id = %s", star_count, message.id)
-
+                try:
+                    starboard_msg = await starboard_channel.fetch_message(entry["starboard_message_id"])
+                    await starboard_msg.edit(content=content, embed=embed)
+                    await self.bot.db.execute("UPDATE starboard SET stars = %s WHERE original_message_id = %s", star_count, message.id)
+                except discord.NotFound:
+                    new_msg = await starboard_channel.send(content=content, embed=embed)
+                    await self.bot.db.execute("UPDATE starboard SET starboard_message_id = %s, stars = %s WHERE original_message_id = %s", new_msg.id, star_count, message.id)
             else:
                 starboard_msg = await starboard_channel.send(content=content, embed=embed)
                 await self.bot.db.execute("INSERT INTO starboard (original_message_id, starboard_message_id, stars) VALUES (%s, %s, %s)", message.id, starboard_msg.id, star_count)
