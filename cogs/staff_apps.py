@@ -139,7 +139,7 @@ class AppReviewActions(discord.ui.View):
 
         transcript = await chat_exporter.export(interaction.channel)
         log_channel = interaction.guild.get_channel(int(os.getenv('APPLICATION_LOG_CHANNEL_ID')))
-        await self.bot.db.execute("UPDATE tickets SET status = 'closed' WHERE channel_id = %s", interaction.channel.id)
+        await interaction.client.db.execute("UPDATE tickets SET status = 'closed' WHERE channel_id = %s", interaction.channel.id)
 
         if transcript:
             transcript_file = discord.File(io.BytesIO(transcript.encode()), filename=f"application-{self.applicant.name}.html")
@@ -172,7 +172,7 @@ class AppFinalActions(discord.ui.View):
 
         transcript = await chat_exporter.export(interaction.channel)
         log_channel = interaction.guild.get_channel(int(os.getenv('APPLICATION_LOG_CHANNEL_ID')))
-        await self.bot.db.execute("UPDATE tickets SET status = 'closed' WHERE channel_id = %s", interaction.channel.id)
+        await interaction.client.db.execute("UPDATE tickets SET status = 'closed' WHERE channel_id = %s", interaction.channel.id)
 
         if transcript:
             transcript_file = discord.File(io.BytesIO(transcript.encode()), filename=f"application-{self.applicant.name}.html")
