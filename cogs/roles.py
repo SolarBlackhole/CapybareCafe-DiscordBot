@@ -77,6 +77,6 @@ class ReactionRoles(commands.Cog):
         await self.helper.add_role_to_menu(menu_message.id, 0, "placeholder", style="primary")
         
         await interaction.followup.send(f"✅ Created new role menu in {channel.mention} with ID `{menu_message.id}`. Use this ID to add buttons.", ephemeral=True)
-
-async def setup(bot):
-    await bot.add_cog(ReactionRoles(bot))
+# Removed setup function due to broken functionality, will rework and add back later
+# async def setup(bot):
+#     await bot.add_cog(ReactionRoles(bot))

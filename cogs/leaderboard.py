@@ -31,7 +31,7 @@ class Leaderboard(commands.Cog):
             user_data = {"xp": 0, "level": 0}
 
         self.cooldowns[user_id] = current_time
-        xp_gain = random.randint(15, 25)
+        xp_gain = random.randint(10, 25)
         new_xp = user_data['xp'] + xp_gain
         current_level = user_data['level']
 
@@ -68,7 +68,7 @@ class Leaderboard(commands.Cog):
         embed.add_field(name="Level", value=str(level), inline=True)
         embed.add_field(name="XP", value=f"{xp} / {needed_xp}", inline=True)
 
-        progress = min(1.0, xp / needed_xp) # Prevent bar breaking if data is weird
+        progress = min(1.0, xp / needed_xp)
         bar_count = int(progress * 10)
         bar = "█" * bar_count + "░" * (10 - bar_count)
         embed.add_field(name="Progress", value=f"`{bar}`", inline=False)
