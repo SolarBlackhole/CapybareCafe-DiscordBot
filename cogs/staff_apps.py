@@ -192,7 +192,7 @@ class StaffApplications(commands.Cog):
             name="toggle_apps", 
             description="Toggle staff applications open/closed"
     )
-    @app_commands.checks.has_role(int(os.getenv('STAFF_MANAGER_ROLE_ID')))
+    @app_commands.checks.has_permissions(administrator=True)
     async def toggle_apps(self, interaction: discord.Interaction, open_status: bool):
         await interaction.response.defer(ephemeral=True) # Defer because of multiple DB calls
         
