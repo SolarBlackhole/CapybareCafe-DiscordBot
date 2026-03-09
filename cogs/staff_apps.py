@@ -1,5 +1,6 @@
 import discord
-from discord.ext import app_commands
+from discord import app_commands
+from discord.ext import commands
 import os
 import asyncio
 import chat_exporter
@@ -25,14 +26,46 @@ class StaffAppLauncher(discord.ui.View):
         await interaction.response.send_modal(StaffAppModal())
 
 class StaffAppModal(discord.ui.Modal):
-    steam_id = discord.ui.TextInput(label="SteamID64", placeholder="7656119xxxxxxxxxx", min_length=17, max_length=17)
-    age = discord.ui.TextInput(label="Age", placeholder="", min_length=2, max_length=2)
-    timezone = discord.ui.TextInput(label="Timezone", placeholder="UTC+X", min_length=4, max_length=6)
-    has_microphone = discord.ui.TextInput(label="Do you have a microphone?", placeholder="Yes/No", min_length=2, max_length=3)
-    experience = discord.ui.TextInput(label="What is your experience with staff roles?", style=discord.TextStyle.paragraph, placeholder="", min_length=10, max_length=2000)
-    fit = discord.ui.TextInput(label="Why do you think you'd be a good fit for the staff team?", style=discord.TextStyle.paragraph, placeholder="", min_length=10, max_length=2000)
-    bias = discord.ui.TextInput(label="Do you have any biases that would affect your ability to be a fair staff member?", style=discord.TextStyle.paragraph, placeholder="", min_length=10, max_length=2000)
-    agreement = discord.ui.TextInput(label="Do you understand that abusing permissions, showing overt toxicity towards community members, or simply not being a good fit for the role may have your role revoked at any time?", placeholder="Yes/No", min_length=2, max_length=3)
+    def __init__(self):
+        super().__init__(title="Staff Application")
+
+    # Field 1: Basic Info
+    basics = discord.ui.TextInput(
+        label="SteamID64 & Age", 
+        placeholder="SteamID: 7656119xxxxxxxxxx | Age: 25",
+        min_length=20, 
+        max_length=50
+    )
+    
+    availability = discord.ui.TextInput(
+        label="Timezone & Microphone", 
+        placeholder="Timezone: UTC+0 | Mic: Yes",
+        min_length=10, 
+        max_length=40
+    )
+    
+    experience = discord.ui.TextInput(
+        label="Prior Experience", 
+        style=discord.TextStyle.paragraph, 
+        placeholder="What is your experience with moderation roles?", 
+        min_length=10, 
+        max_length=1000
+    )
+    
+    fit_bias = discord.ui.TextInput(
+        label="Fit & Biases", 
+        style=discord.TextStyle.paragraph, 
+        placeholder="Why are you a good fit? Any biases we should know?", 
+        min_length=10, 
+        max_length=1500
+    )
+
+    agreement = discord.ui.TextInput(
+        label="Do you agree to follow the code of conduct?", 
+        placeholder="Yes/No", 
+        min_length=2, 
+        max_length=3
+    )
 
     async def on_submit(self, interaction: discord.Interaction):
         guild = interaction.guild
@@ -52,15 +85,15 @@ class StaffAppModal(discord.ui.Modal):
         )
 
         embed = discord.Embed(title="New Staff Application", color=discord.Color.blue())
-        embed.add_field(name="Applicant", value=interaction.user.mention)
-        embed.add_field(name="SteamID64", value=self.steam_id.value)
-        embed.add_field(name="Age", value=self.age.value)
-        embed.add_field(name="Timezone", value=self.timezone.value)
-        embed.add_field(name="Does the applicant have a microphone?", value=self.has_microphone.value)
-        embed.add_field(name="Applicant's Experience", value=self.experience.value, inline=False)
-        embed.add_field(name="Why they're a good fit", value=self.fit.value, inline=False)
-        embed.add_field(name="Potential Biases", value=self.bias.value, inline=False)
-        embed.add_field(name="Staff Agreement", value=self.agreement.value)
+        embed.set_thumbnail(url=interaction.user.display_avatar.url)
+
+        embed.add_field(name="Applicant", value=interaction.user.mention, inline=True)
+        embed.add_field(name="Basics (SteamID/Age)", value=self.basics.value, inline=True)
+        embed.add_field(name="Availability (TZ/Mic)", value=self.availability.value, inline=True)
+    
+        embed.add_field(name="Experience", value=self.experience.value, inline=False)
+        embed.add_field(name="Fit & Biases", value=self.fit_bias.value, inline=False)
+        embed.add_field(name="Staff Agreement", value=self.agreement.value, inline=False)
 
         await channel.send(embed=embed, view=AppReviewActions(interaction.user))
 
@@ -69,7 +102,7 @@ class StaffAppModal(discord.ui.Modal):
         embed = discord.Embed(description=f"{interaction.user.mention} has submitted a staff application! Click the button below to view their application.", color=discord.Color.green())
         view = discord.ui.View()
         view.add_item(discord.ui.Button(label="View Application", style=discord.ButtonStyle.primary, url=channel.jump_url))
-        await list_applications_channel.send(embed=embed)
+        await list_applications_channel.send(embed=embed, view=view)
 
 # This view will be used by staff members to take action on applications after reviewing them
 class AppReviewActions(discord.ui.View):
@@ -82,9 +115,10 @@ class AppReviewActions(discord.ui.View):
         if interaction.user == self.applicant:
             await interaction.response.send_message("You cannot take action on your own application.", ephemeral=True)
             return
+        await interaction.message.edit(view=AppFinalActions(self.applicant))
         await interaction.response.send_message(f" {self.applicant.mention} you have passed the initial review stage! A staff member will contact you soon.")
 
-        await interaction.message.edit(view=AppFinalActions(self.applicant))
+        
 
     @discord.ui.button(label="Deny", style=discord.ButtonStyle.danger, custom_id="deny_screen")
     async def deny(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -97,21 +131,23 @@ class AppReviewActions(discord.ui.View):
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary, custom_id="cancel_application")
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("Your application has been cancelled.", ephemeral=True)
         await self.close_with_transcript(interaction, "CANCELLED")
 
     async def close_with_transcript(self, interaction, decision):
+        if not interaction.response.is_done():
+            await interaction.response.defer()
+
         await interaction.channel.send(f"Closing application and generating transcript... Decision: {decision}")
-        await interaction.response.defer()
 
         transcript = await chat_exporter.export(interaction.channel)
         log_channel = interaction.guild.get_channel(int(os.getenv('APPLICATION_LOG_CHANNEL_ID')))
-        await self.bot.db.execute("UPDATE tickets SET status = 'closed' WHERE channel_id = %s", interaction.channel.id)
+        await interaction.client.db.execute("UPDATE tickets SET status = 'closed' WHERE channel_id = %s", interaction.channel.id)
 
         if transcript:
             transcript_file = discord.File(io.BytesIO(transcript.encode()), filename=f"application-{self.applicant.name}.html")
             await log_channel.send(f"Application for {self.applicant.mention} has been {decision}. Transcript attached.", file=transcript_file)
         
+        await interaction.followup.send("The application channel will be deleted in 5 seconds.")
         await asyncio.sleep(5)
         await interaction.channel.delete()
 
@@ -138,12 +174,13 @@ class AppFinalActions(discord.ui.View):
 
         transcript = await chat_exporter.export(interaction.channel)
         log_channel = interaction.guild.get_channel(int(os.getenv('APPLICATION_LOG_CHANNEL_ID')))
-        await self.bot.db.execute("UPDATE tickets SET status = 'closed' WHERE channel_id = %s", interaction.channel.id)
+        await interaction.client.db.execute("UPDATE tickets SET status = 'closed' WHERE channel_id = %s", interaction.channel.id)
 
         if transcript:
             transcript_file = discord.File(io.BytesIO(transcript.encode()), filename=f"application-{self.applicant.name}.html")
             await log_channel.send(f"Application for {self.applicant.mention} has been {decision}. Transcript attached.", file=transcript_file)
         
+        await interaction.followup.send("The application channel will be deleted in 5 seconds.")
         await asyncio.sleep(5)
         await interaction.channel.delete()
 
@@ -216,3 +253,6 @@ class StaffApplications(commands.Cog):
             content=f"Staff applications have been **{status_val}** and the recruitment message was **{success_action}**.", 
             ephemeral=True
         )
+
+async def setup(bot):
+    await bot.add_cog(StaffApplications(bot))

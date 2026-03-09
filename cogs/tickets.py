@@ -1,7 +1,7 @@
 import discord
+from discord.ext import commands
 from discord import app_commands
-from ..helpers.tickets_helper import TicketsHelper
-from dotenv import load_dotenv
+from helpers.tickets_helper import TicketsHelper
 import asyncio
 import os
 
@@ -31,7 +31,7 @@ class TicketsLauncher(discord.ui.View):
         await ticket_channel.set_permissions(interaction.user, read_messages=True, send_messages=True)
         await ticket_channel.set_permissions(guild.default_role, read_messages=False)
 
-        await interaction.response.send_message(f"Ticket created: {ticket_channel.mention}", ephemeral=True)
+        await interaction.followup.send(f"Ticket created: {ticket_channel.mention}", ephemeral=True)
         await ticket_channel.send(f"{interaction.user.mention} Welcome to your support ticket! A staff member will be with you shortly. To close this ticket, use the 'Close Ticket' button below.", view=CloseTicketView(self.helper))
 
     # Create Ticket Button - Report
@@ -48,15 +48,18 @@ class CloseTicketView(discord.ui.View):
     async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
 
         embed = discord.Embed(description="Are you sure you want to close this ticket?", color=discord.Color.orange())
-        await interaction.response.send_message(embed=embed, view=ConfirmClose(), ephemeral=True)
+        await interaction.response.send_message(embed=embed, view=ConfirmClose(self.helper), ephemeral=True)
 
 class ConfirmClose(discord.ui.View):
+    def __init__(self, helper):
+        super().__init__(timeout=180)
+        self.helper = helper
+
     @discord.ui.button(label="Yes, Close", style=discord.ButtonStyle.danger, custom_id="confirm_close")
     async def confirm_close(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer()
         channel = interaction.channel
         await channel.send("Closing ticket and generating transcript...")
-        # show bot is thinking while generating transcript
-        await interaction.response.defer() 
         transcript_file = await self.helper.generate_transcript(channel)
         if transcript_file:
             await channel.send("Here is the transcript of your ticket:", file=transcript_file)
@@ -87,8 +90,9 @@ class ReportPlayerModal(discord.ui.Modal, title="Report a Player"):
         embed.add_field(name="Player Name / Steam ID", value=self.player_name.value, inline=False)
         embed.add_field(name="Reason for Report", value=self.report_reason.value, inline=False)
         await channel.send(embed=embed, content=f"{interaction.user.mention} Your report has been submitted. A staff member will review it shortly. To close this report, use the 'Close Ticket' button below.", view=CloseTicketView(TicketsHelper(interaction.client.db_pool)))
+        await interaction.response.send_message(f"Report submitted: {channel.mention}", ephemeral=True)
 
-class Tickets(app_commands.Group):
+class Tickets(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.helper = TicketsHelper(bot.db_pool)

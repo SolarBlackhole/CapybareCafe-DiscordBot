@@ -1,4 +1,4 @@
-class RoleHelper:
+class RolesHelper:
     def __init__(self, db_pool):
         self.db_pool = db_pool
 

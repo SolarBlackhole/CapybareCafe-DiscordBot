@@ -37,13 +37,11 @@ class ReactionRoles(commands.Cog):
     @app_commands.command(name="role_menu_add", description="Add a role button to an existing menu")
     @app_commands.checks.has_permissions(administrator=True)
     async def add_role(self, interaction: discord.Interaction, message_id: str, role: discord.Role, label: str):
-        # 1. Update MariaDB (Logic: INSERT INTO role_menus ...)
+        await interaction.response.defer(ephemeral=True)
         await self.helper.add_role_to_menu(int(message_id), role.id, label, style = "primary")
-        
-        # 2. Fetch all current roles for this message from DB
+
         roles_data = await self.helper.get_menu_roles(int(message_id))
         
-        # 3. Update the message with the new View
         try:
             channel = interaction.channel
             message = await channel.fetch_message(int(message_id))
@@ -57,13 +55,10 @@ class ReactionRoles(commands.Cog):
     async def remove_role(self, interaction: discord.Interaction, message_id: str, role: discord.Role):
         await interaction.response.defer(ephemeral=True)
         
-        # 1. Remove from MariaDB
         await self.helper.remove_role_from_menu(int(message_id), role.id)
         
-        # 2. Rebuild the view with remaining roles
         roles_data = await self.helper.get_menu_roles(int(message_id))
         
-        # 3. Update message
         try:
             channel = interaction.channel
             message = await channel.fetch_message(int(message_id))
@@ -72,5 +67,16 @@ class ReactionRoles(commands.Cog):
         except Exception as e:
             await interaction.followup.send(f"❌ Failed to edit message: {e}", ephemeral=True)
 
-async def setup(bot):
-    await bot.add_cog(ReactionRoles(bot))
+    @app_commands.command(name="role_menu_create", description="Create a new role menu message")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def create_menu(self, interaction: discord.Interaction, channel: discord.TextChannel, title: str, description: str):
+        await interaction.response.defer(ephemeral=True)
+        
+        menu_message = await channel.send(content=f"**{title}**\n{description}", view=DynamicRoleView([]))
+        
+        await self.helper.add_role_to_menu(menu_message.id, 0, "placeholder", style="primary")
+        
+        await interaction.followup.send(f"✅ Created new role menu in {channel.mention} with ID `{menu_message.id}`. Use this ID to add buttons.", ephemeral=True)
+# Removed setup function due to broken functionality, will rework and add back later
+# async def setup(bot):
+#     await bot.add_cog(ReactionRoles(bot))
