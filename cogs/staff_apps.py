@@ -158,6 +158,9 @@ class AppFinalActions(discord.ui.View):
 
     @discord.ui.button(label="Accept Application", style=discord.ButtonStyle.success, custom_id="accept_final")
     async def accept(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user == self.applicant:
+            await interaction.response.send_message("You cannot take action on your own application.", ephemeral=True)
+            return
         trial_mod_role = interaction.guild.get_role(int(os.getenv('TRIAL_MODERATOR_ROLE_ID')))
         await self.applicant.send("Congratulations! Your application has been accepted and you've been given the Trial Moderator role. A staff member will contact you soon with more information.")
         await interaction.guild.get_member(self.applicant.id).add_roles(trial_mod_role)
@@ -165,6 +168,9 @@ class AppFinalActions(discord.ui.View):
 
     @discord.ui.button(label="Deny Application", style=discord.ButtonStyle.danger, custom_id="deny_final")
     async def deny(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user == self.applicant:
+            await interaction.response.send_message("You cannot take action on your own application.", ephemeral=True)
+            return
         await self.applicant.send("After further review, we've decided not to move forward with your application. Thank you for your interest in joining the Capybara Cafe staff team!")
         await self.close_with_transcript(interaction, "DENIED")
 
