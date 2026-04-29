@@ -63,10 +63,9 @@ class ConfirmClose(discord.ui.View):
         await channel.send("Closing ticket and generating transcript...")
         transcript_file = await self.helper.generate_transcript(channel)
         if transcript_file:
-            await channel.send("Here is the transcript of your ticket:", file=transcript_file)
-            await transcripts_channel.send(f"Transcript for ticket {channel.name} (ID: {channel.id}):", file=transcript_file)
+            await transcripts_channel.send(f"Transcript for {channel.name} (ID: {channel.id}):", file=transcript_file)
         else:
-            await channel.send("Failed to generate transcript.")
+            await transcripts_channel.send("Failed to generate transcript.")
         await channel.send("Thank you for contacting support! This ticket will now be closed in 10 seconds.")
         await self.helper.close_ticket_record(channel.id)
         await asyncio.sleep(10)
