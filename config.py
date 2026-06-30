@@ -1,7 +1,9 @@
 config = {
-    'command_prefix': '!',
     'cogs': [
         'cogs.example_cog',
-        # Add more cogs here
-    ],
+        'cogs.leaderboard.leaderboard',
+        'cogs.starboard.starboard',
+        'cogs.welcome.welcome',
+        'cogs.tickets.tickets'
+    ]
 }
