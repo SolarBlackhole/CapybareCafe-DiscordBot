@@ -41,8 +41,8 @@ class Leaderboard(commands.Cog):
         if new_xp >= next_level_xp:
             current_level += 1
             await self.bot.db.execute(
-                "UPDATE leveling SET xp = %s, level = %s WHERE user_id = %s", 
-                new_xp, current_level, user_id
+                "UPDATE leveling SET xp = 0, level = %s WHERE user_id = %s", 
+                current_level, user_id
             )
             # Send level up message
             await message.channel.send(f"🎉 Congrats {message.author.mention}, you reached **Level {current_level}**!")
