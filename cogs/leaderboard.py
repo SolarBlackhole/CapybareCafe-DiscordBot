@@ -80,7 +80,7 @@ class Leaderboard(commands.Cog):
         await interaction.response.defer()
         
         # Fetching top 10 from MariaDB
-        rows = await self.bot.db.fetch("SELECT user_id, xp, level FROM leveling ORDER BY xp DESC LIMIT 10")
+        rows = await self.bot.db.fetch("SELECT user_id, xp, level FROM leveling ORDER BY level DESC LIMIT 10")
 
         embed = discord.Embed(title="The Cafe's most active members", color=discord.Color.gold())
         embed.set_thumbnail(url=interaction.guild.icon.url if interaction.guild.icon else None)
