@@ -30,5 +30,5 @@ class LeaderboardHelper:
         """Fetches the top 10 players sorted by XP."""
         async with self.db_pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cur:
-                await cur.execute("SELECT user_id, xp, level FROM leveling ORDER BY xp DESC LIMIT 10")
+                await cur.execute("SELECT user_id, xp, level FROM leveling ORDER BY level DESC LIMIT 10")
                 return await cur.fetchall()
