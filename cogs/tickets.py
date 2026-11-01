@@ -16,6 +16,7 @@ class TicketsLauncher(discord.ui.View):
         await interaction.response.defer(ephemeral=True)
         guild = interaction.guild
         category = guild.get_channel(int(os.getenv('TICKETS_CATEGORY_ID')))
+        staff_role = guild.get_role(int(os.getenv('STAFF_ROLE_ID')))
         if not category:
             category = await guild.create_category("Tickets")
 
@@ -24,7 +25,7 @@ class TicketsLauncher(discord.ui.View):
                                                          overwrites={
                                                                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
                                                                 interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-                                                                guild.get_role(int(os.getenv('STAFF_ROLE_ID'))): discord.PermissionOverwrite(read_messages=True, send_messages=True)
+                                                                staff_role: discord.PermissionOverwrite(read_messages=True, send_messages=True)
                                                             }
                                                         )
         await self.helper.create_ticket_record(interaction.user.id, ticket_channel.id)
@@ -32,7 +33,7 @@ class TicketsLauncher(discord.ui.View):
         await ticket_channel.set_permissions(guild.default_role, read_messages=False)
 
         await interaction.followup.send(f"Ticket created: {ticket_channel.mention}", ephemeral=True)
-        await ticket_channel.send(f"{interaction.user.mention} Welcome to your support ticket! A staff member will be with you shortly. To close this ticket, use the 'Close Ticket' button below.", view=CloseTicketView(self.helper))
+        await ticket_channel.send(f"{interaction.user.mention} Welcome to your support ticket! {staff_role.mention} will be with you shortly. To close this ticket, use the 'Close Ticket' button below.", view=CloseTicketView(self.helper))
 
     # Create Ticket Button - Report
     @discord.ui.button(label="Report User", style=discord.ButtonStyle.danger, custom_id="report_user")
